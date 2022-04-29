@@ -20,7 +20,9 @@ import clone.reddit.repository.CommentRepository;
 import clone.reddit.repository.PostRepository;
 import clone.reddit.repository.UserRepository;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @AllArgsConstructor
 public class CommentService {
@@ -38,8 +40,23 @@ public class CommentService {
 	public void save(CommentsDto commentsDto) {
 		Post post = postRepository.findById(commentsDto.getPostId())
                 .orElseThrow(() -> new PostNotFoundException(commentsDto.getPostId().toString()));
-        Comment comment=commentMapper.map(commentsDto,post,authService.getCurrentUser());
-		commentRepository.save(comment);
+		
+        //temporary fix - FIXME later
+        //****************************
+        		
+		User user = userRepository.findByUsername("alby3342").orElseThrow(()->new UsernameNotFoundException("Username not found - alby3342"));
+        log.info("commentsDto: {}",commentsDto);
+        Comment commentToSave=new Comment();
+        commentToSave= commentMapper.map(commentsDto, post, user);
+        log.info("commentToSave: {}",commentToSave);
+        commentToSave.setUser(user);
+        commentToSave.setPost(post);
+        log.info("commentToSave: {}",commentToSave);
+        
+        //****************************
+        
+        //Comment comment=commentMapper.map(commentsDto,post,authService.getCurrentUser());
+        commentRepository.save(commentToSave);
 		
 		String message = mailContentBuilder.build(post.getUser().getUsername() + " posted a comment on your post." + POST_URL);
         sendCommentNotification(message, post.getUser());

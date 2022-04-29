@@ -20,7 +20,9 @@ import clone.reddit.repository.PostRepository;
 import clone.reddit.repository.SubredditRepository;
 import clone.reddit.repository.UserRepository;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @AllArgsConstructor
 @Transactional
@@ -35,7 +37,23 @@ public class PostService {
     public void save(PostRequest postRequest) {
         Subreddit subreddit = subredditRepository.findByName(postRequest.getSubredditName())
                 .orElseThrow(() -> new SubredditNotFoundException(postRequest.getSubredditName()));
-        postRepository.save(postMapper.map(postRequest, subreddit, authService.getCurrentUser()));
+        //postRepository.save(postMapper.map(postRequest, subreddit, authService.getCurrentUser()));
+        
+        //temporary fix - FIXME later
+        //****************************
+        
+        User user = userRepository.findByUsername("alby3342").orElseThrow(()->new UsernameNotFoundException("Username not found - alby3342"));
+        log.info("postRequest: {}",postRequest);
+        Post postToSave=new Post();
+        postToSave= postMapper.map(postRequest, subreddit, user);
+        postToSave.setUser(user);
+        postToSave.setSubreddit(subreddit);
+        log.info("postToSave: {}",postToSave);
+        
+        //****************************
+        
+        //postRepository.save(postMapper.map(postRequest, subreddit, user));
+        postRepository.save(postToSave);
     }
 
     @Transactional(readOnly = true)
